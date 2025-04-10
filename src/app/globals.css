@@ -1,26 +1,184 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground-rgb: 60, 60, 67;
+    --background-start-rgb: 255, 252, 247;
+    --background-end-rgb: 250, 245, 255;
+    --primary-color: 147, 51, 234;
+    --accent-color: 236, 72, 153;
+    --soft-color: 245, 243, 255;
+  }
+
+  html {
+    height: 100%;
+  }
+
+  body {
+    color: rgb(var(--foreground-rgb));
+    background: linear-gradient(135deg,
+        rgb(var(--background-start-rgb)),
+        rgb(var(--background-end-rgb)));
+    min-height: 100vh;
+    font-family: 'Noto Sans TC', sans-serif;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+  }
+
+  /* 修復文字和背景顏色問題 */
+  .text-purple-600 {
+    color: rgb(147, 51, 234);
+  }
+
+  .text-purple-700 {
+    color: rgb(126, 34, 206);
+  }
+
+  .text-purple-800 {
+    color: rgb(107, 33, 168);
+  }
+
+  .bg-purple-50 {
+    background-color: rgb(250, 245, 255);
+  }
+
+  .bg-purple-100 {
+    background-color: rgb(243, 232, 255);
+  }
+
+  .bg-purple-600 {
+    background-color: rgb(147, 51, 234);
+  }
+
+  .text-white {
+    color: white;
+  }
+
+  .border-purple-100 {
+    border-color: rgb(243, 232, 255);
+  }
+
+  .border-purple-200 {
+    border-color: rgb(233, 213, 255);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+
+  /* 增加頁面過渡動畫 */
+  .page-transition-enter {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .page-transition-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s, transform 0.3s;
+  }
+
+  /* 優化彈幕樣式 */
+  .danmaku {
+    position: absolute;
+    white-space: nowrap;
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    font-size: 1rem;
+    max-width: 80vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transform: translateZ(0);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-width: 1px;
+    will-change: transform;
+  }
+
+  .danmaku:hover {
+    transform: translateZ(0) scale(1.05);
+    box-shadow: 0 6px 16px rgba(147, 51, 234, 0.16);
+    z-index: 20;
+  }
+
+  /* 星期顯示的文字顏色 */
+  .danmaku .font-medium {
+    color: rgba(147, 51, 234, 0.9);
+  }
+
+  /* 移除舊的記憶照片效果，改用更微妙的效果 */
+  .memory-photo {
+    transition: all 0.25s ease-in-out;
+  }
+
+  .memory-photo:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(var(--primary-color), 0.12);
+  }
+
+  /* 時光水波紋效果 */
+  .time-ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    background: rgba(var(--primary-color), 0.08);
+    animation: ripple 2s linear infinite;
+  }
+
+  /* 隱藏滾動條但保持可滾動性 */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer utilities {
+  @keyframes ripple {
+    to {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+
+  /* 添加彈幕動畫關鍵幀 */
+  @keyframes danmaku-slide {
+    from {
+      transform: translateX(100%);
+    }
+
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  /* 滾動相關 */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* 確保滾動軸不可見但保持功能 */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 垂直時間軸項目動畫效果 */
+  .timeline-item {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity, font-size;
+  }
+
+  .timeline-item:hover {
+    cursor: pointer;
+  }
 }

@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 時光對話 - LINE 聊天記錄回顧網站
 
-## Getting Started
+一個精美的 LINE 聊天記錄回顧網站，讓您以全新的方式重溫珍貴對話。
 
-First, run the development server:
+## 功能特色
+
+- **上傳 LINE 聊天記錄**：簡單地上傳您從 LINE 匯出的聊天記錄檔案
+- **時間線顯示**：按月份組織的精美時間線，直觀地查看對話歷史
+- **彈幕效果**：當您瀏覽特定月份時，該月份的隨機對話會以彈幕形式呈現，增加回顧樂趣
+- **本地處理**：所有處理都在本地進行，確保您的隱私安全
+
+## 如何使用
+
+1. **獲取 LINE 聊天記錄**：
+   - 開啟 LINE 應用程式
+   - 進入您想要回顧的聊天室
+   - 點擊右上角選單
+   - 選擇「設定」
+   - 選擇「匯出聊天記錄」
+   - 將匯出的檔案保存到您的裝置上
+
+2. **上傳聊天記錄**：
+   - 訪問時光對話網站
+   - 點擊上傳區域或拖放您的聊天記錄檔案
+   - 等待系統處理檔案
+
+3. **瀏覽時間線**：
+   - 處理完成後，自動跳轉到時間線頁面
+   - 使用頂部的月份導航切換不同時間段
+   - 觀賞每個月份的彈幕效果，重溫珍貴對話
+
+## 技術實現
+
+- Next.js 15
+- TypeScript
+- Tailwind CSS 4
+- Framer Motion (動畫效果)
+- date-fns (日期處理)
+- react-intersection-observer (交叉觀察器)
+
+## 隱私聲明
+
+時光對話高度重視您的隱私：
+- 所有處理都在您的瀏覽器本地進行
+- 聊天記錄不會上傳到任何伺服器
+- 資料使用 localStorage 暫存，僅在您的瀏覽器中保存
+
+## 開發設置
 
 ```bash
+# 安裝依賴
+npm install
+
+# 啟動開發服務器
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# 構建生產版本
+npm run build
+
+# 啟動生產服務器
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 貢獻
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+歡迎提出問題或提交拉取請求，一起讓這個項目變得更好！

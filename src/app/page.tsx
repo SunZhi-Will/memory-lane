@@ -157,22 +157,26 @@ export default function Home() {
           transition={{ duration: 0.7 }}
           className="text-center mb-10"
         >
+          <div className="relative w-40 h-40 mx-auto mb-4">
+            <Image
+              src="/MemoryLaneLOGO.png"
+              alt="MemoryLane Logo"
+              fill
+              className="object-contain relative z-10"
+              priority
+            />
+          </div>
+
+          <h2 className="text-3xl font-bold mb-2 text-purple-800">
+            MemoryLane
+          </h2>
+
           <h1 className="text-5xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
             時光回顧
           </h1>
           <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
             每一則訊息都是回憶，每一段對話都值得珍藏
           </p>
-          <div className="relative w-28 h-28 mx-auto mb-6">
-            <div className="absolute inset-0 rounded-full bg-purple-100 animate-pulse"></div>
-            <Image
-              src="/line-chat.svg"
-              alt="LINE聊天圖示"
-              fill
-              className="object-contain relative z-10 p-4"
-              priority
-            />
-          </div>
           <p className="text-gray-500 italic max-w-md mx-auto">
             「時間沖淡了一切，但對話卻記錄了我們共度的每一刻」
           </p>
@@ -216,7 +220,8 @@ export default function Home() {
                     <p className="mb-2 text-sm text-gray-600">
                       <span className="font-semibold">點擊上傳</span> 或將檔案拖放至此
                     </p>
-                    <p className="text-xs text-gray-500">LINE 聊天紀錄 (TXT 或 LOG 檔案)</p>
+                    <p className="text-xs text-gray-500 mb-1">僅限 LINE 聊天紀錄 (TXT 或 LOG 檔案)</p>
+                    <p className="text-xs text-purple-600 font-medium">請確保檔案格式為 LINE 對話紀錄匯出格式</p>
                   </motion.div>
 
                   <motion.button
@@ -364,7 +369,7 @@ export default function Home() {
           className="mt-16 text-center text-sm text-gray-500"
         >
           <p className="mb-2">
-            時光回顧 © {new Date().getFullYear()} | 用科技珍藏美好
+            MemoryLane | 時光回顧 © {new Date().getFullYear()} | 用科技珍藏美好
           </p>
           <p>
             您的隱私始終是我們的首要考量，所有資料皆僅儲存於您的裝置中

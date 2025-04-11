@@ -12,6 +12,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -117,6 +118,15 @@ export default function Home() {
   const processFile = async (fileToProcess: File) => {
     if (!fileToProcess) {
       setError('請選擇一個檔案，讓我們一起重溫那些美好時光');
+      setShowErrorNotification(true);
+      return;
+    }
+
+    // 檢查檔案類型，確保只有 .txt 或 .log 檔案
+    const fileName = fileToProcess.name.toLowerCase();
+    if (!fileName.endsWith('.txt') && !fileName.endsWith('.log')) {
+      setError('請上傳 .txt 或 .log 格式的 LINE 聊天紀錄檔案');
+      setShowErrorNotification(true);
       return;
     }
 
@@ -140,6 +150,15 @@ export default function Home() {
       const messages = parseLineChat(text);
       console.log(`解析完成，取得 ${messages.length} 則訊息`);
 
+      // 檢查是否成功解析到任何 LINE 聊天記錄
+      if (messages.length === 0) {
+        setError('所上傳的檔案不是有效的 LINE 聊天紀錄格式。請確保您上傳的是從 LINE 匯出的聊天紀錄檔案。');
+        setIsUploading(false);
+        setUploadProgress(null);
+        setShowErrorNotification(true);
+        return;
+      }
+
       // 提取月份並去重
       setUploadProgress('正在處理時間資訊...');
       console.log('開始提取唯一月份...');
@@ -162,10 +181,13 @@ export default function Home() {
       let timestamps = Array.from(monthSet).sort();
       console.log('排序後的月份:', timestamps);
 
-      // 只有在沒找到任何月份時才使用預設值
+      // 檢查是否成功提取到任何月份
       if (timestamps.length === 0) {
-        console.warn('未檢測到任何月份，使用示例月份');
-        timestamps = ['2024/01', '2024/03', '2025/01'];
+        setError('無法從聊天記錄中提取日期資訊。請確保您上傳的 LINE 聊天紀錄包含正確的日期格式。');
+        setIsUploading(false);
+        setUploadProgress(null);
+        setShowErrorNotification(true);
+        return;
       }
 
       // 檢查時間戳格式是否正確
@@ -185,9 +207,17 @@ export default function Home() {
       }, 1500);
     } catch (err) {
       console.error('處理檔案時出錯:', err);
-      setError('解析檔案時出錯，請確保是有效的 LINE 聊天紀錄格式');
+      const errorMessage = err instanceof Error ? err.message : '解析檔案時出錯';
+      if (errorMessage.includes('未檢測到有效的 LINE 聊天記錄格式')) {
+        setError('所上傳的檔案不是有效的 LINE 聊天紀錄格式。請確保您上傳的是從 LINE 匯出的聊天紀錄檔案。');
+      } else if (errorMessage.includes('無法從聊天記錄中提取日期資訊')) {
+        setError('無法從聊天記錄中提取日期資訊。請確保您上傳的 LINE 聊天紀錄包含正確的日期格式。');
+      } else {
+        setError('處理檔案時發生錯誤，請確保上傳的是有效的 LINE 聊天紀錄格式。');
+      }
       setIsUploading(false);
       setUploadProgress(null);
+      setShowErrorNotification(true);
     }
   };
 
@@ -203,6 +233,27 @@ export default function Home() {
     }, 300);
   };
 
+  // 關閉錯誤通知
+  const closeErrorNotification = () => {
+    setShowErrorNotification(false);
+  };
+
+  // 當錯誤訊息顯示時，設置一個定時器在5秒後自動關閉
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    if (showErrorNotification) {
+      timer = setTimeout(() => {
+        setShowErrorNotification(false);
+      }, 5000); // 5秒後自動關閉
+    }
+
+    // 清理定時器
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [showErrorNotification]);
+
   return (
     <main
       className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden"
@@ -210,10 +261,42 @@ export default function Home() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* 彈出式錯誤通知 */}
+      <AnimatePresence>
+        {showErrorNotification && error && (
+          <motion.div
+            key="error-notification"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white rounded-lg shadow-xl border border-rose-200 p-4 max-w-md w-full flex items-start"
+          >
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-rose-100 flex items-center justify-center mr-3">
+              <svg className="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-grow">
+              <h3 className="text-base font-medium text-rose-700 mb-1">上傳錯誤</h3>
+              <p className="text-sm text-gray-600">{error}</p>
+            </div>
+            <button
+              onClick={closeErrorNotification}
+              className="flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 拖曳疊加層 - 只在拖曳激活時顯示 */}
       <AnimatePresence>
         {dragActive && (
           <motion.div
+            key="drag-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -259,6 +342,7 @@ export default function Home() {
         <AnimatePresence>
           {isUploading && (
             <motion.div
+              key="uploading-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -359,25 +443,7 @@ export default function Home() {
                   </button>
                 </div>
 
-                <AnimatePresence>
-                  {file && !isUploading && (
-                    <p className="text-sm text-purple-700 bg-purple-50 p-2 rounded-lg flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>已選擇: <span className="font-medium">{file.name}</span></span>
-                    </p>
-                  )}
 
-                  {error && (
-                    <p className="text-sm text-rose-600 bg-rose-50 p-2 rounded-lg flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>{error}</span>
-                    </p>
-                  )}
-                </AnimatePresence>
               </div>
             </div>
           </motion.div>

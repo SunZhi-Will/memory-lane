@@ -246,7 +246,7 @@ export default function Timeline() {
         // 生成新彈幕
         const newDanmakus = selectedMessages.map((msg, index) => {
             // 生成絕對唯一的ID：當前時間 + 當前彈幕數量 + 索引 + 隨機數
-            const uniqueId = now + ((currentCount + index) * 100000) + Math.floor(Math.random() * 10000);
+            const uniqueId = `danmaku-${now}-${currentCount + index}-${Math.random().toString(36).substr(2, 9)}`;
 
             // 為泡泡模式設定完全隨機的水平位置，覆蓋整個螢幕寬度
             const bubbleHorizontalPosition = isBubbleMode ?
@@ -394,7 +394,7 @@ export default function Timeline() {
                         // 使用新的速度調整持續時間
                         duration: originalDuration / speed,
                         // 創建一個新ID，強制React重新創建元素，確保動畫立即生效
-                        id: `${typeof danmaku.id === 'number' ? danmaku.id : danmaku.id.split('-')[0]}-speed-${Date.now()}`
+                        id: `danmaku-${typeof danmaku.id === 'number' || typeof danmaku.id === 'string' ? danmaku.id : 'unknown'}-speed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
                     };
                 });
             });

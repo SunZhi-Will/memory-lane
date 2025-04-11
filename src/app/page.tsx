@@ -71,11 +71,15 @@ export default function Home() {
       // 這裡我們只是簡單地解析檔案並儲存到 localStorage
       const text = await file.text();
       localStorage.setItem('chatData', text);
+      console.log(`已載入檔案: ${file.name}, 大小: ${file.size} 字節`);
 
       // 使用 lineParser 解析聊天記錄
+      console.log('開始解析聊天記錄...');
       const messages = parseLineChat(text);
+      console.log(`解析完成，取得 ${messages.length} 則訊息`);
 
       // 提取月份並去重
+      console.log('開始提取唯一月份...');
       const monthSet = new Set<string>();
 
       messages.forEach(message => {
@@ -89,8 +93,11 @@ export default function Home() {
         }
       });
 
+      console.log('提取的唯一月份:', monthSet);
+
       // 將 Set 轉換為陣列並排序
       let timestamps = Array.from(monthSet).sort();
+      console.log('排序後的月份:', timestamps);
 
       // 只有在沒找到任何月份時才使用預設值
       if (timestamps.length === 0) {
@@ -98,15 +105,20 @@ export default function Home() {
         timestamps = ['2024/01', '2024/03', '2025/01'];
       }
 
+      // 檢查時間戳格式是否正確
+      console.log('最終使用的時間戳陣列:', JSON.stringify(timestamps));
+
       // 儲存提取的月份
       localStorage.setItem('timestamps', JSON.stringify(timestamps));
+      console.log('已將時間戳存入 localStorage');
 
       // 延遲導航以顯示上傳動畫
+      console.log('準備導航到時間軸頁面...');
       setTimeout(() => {
         router.push('/timeline');
       }, 1500);
     } catch (err) {
-      console.error(err);
+      console.error('處理檔案時出錯:', err);
       setError('解析檔案時出錯，請確保是有效的 LINE 聊天紀錄格式');
       setIsUploading(false);
     }
@@ -146,7 +158,7 @@ export default function Home() {
           className="text-center mb-10"
         >
           <h1 className="text-5xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
-            時光對話
+            時光回顧
           </h1>
           <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
             每一則訊息都是回憶，每一段對話都值得珍藏
@@ -352,7 +364,7 @@ export default function Home() {
           className="mt-16 text-center text-sm text-gray-500"
         >
           <p className="mb-2">
-            時光對話 © {new Date().getFullYear()} | 用科技珍藏美好
+            時光回顧 © {new Date().getFullYear()} | 用科技珍藏美好
           </p>
           <p>
             您的隱私始終是我們的首要考量，所有資料皆僅儲存於您的裝置中

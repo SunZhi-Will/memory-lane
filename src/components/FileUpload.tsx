@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import Button from '@/components/Button';
+import Button from './Button';
 
 interface FileUploadProps {
     onUpload: (file: File) => void;

@@ -79,28 +79,72 @@
     transition: opacity 0.5s, transform 0.3s;
   }
 
-  /* 優化彈幕樣式 */
+  /* 優化彈幕樣式 - 基本通用樣式 */
   .danmaku {
     position: absolute;
-    white-space: nowrap;
-    padding: 0.6rem 1.2rem;
     border-radius: 999px;
     background-color: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     font-size: 1rem;
-    max-width: 80vw;
     overflow: hidden;
     text-overflow: ellipsis;
     transform: translateZ(0);
-    transition: transform 0.2s, box-shadow 0.2s;
+    will-change: transform, opacity;
+    z-index: 10;
+    white-space: nowrap;
     border-width: 1px;
-    will-change: transform;
+    padding: 0.6rem 1.2rem;
+    pointer-events: none;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 彈幕泡泡模式特定樣式 */
+  .danmaku-bubble {
+    white-space: normal;
+    border-radius: 24px;
+    padding: 0.8rem 1.2rem;
+    max-width: 200px;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    z-index: 20;
+    transform: translateZ(0);
+    text-align: left;
+    display: block;
+    transform-style: preserve-3d;
+    will-change: transform, opacity;
+    margin: 0;
+    overflow-wrap: break-word;
+    word-break: normal;
+    width: auto;
+    min-width: 120px;
+    max-height: 80px;
+    height: auto;
+    border-width: 1px;
+    backdrop-filter: none;
+  }
+
+  /* 彈幕一般模式特定樣式 */
+  .danmaku-normal {
+    white-space: nowrap;
+    max-width: 80vw;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    /* 避免位置影響：固定大小並使用絕對定位 */
+    position: absolute;
+    display: block;
+    margin: 0;
+    padding: 0.6rem 1.2rem;
+    height: 40px;
+    line-height: 1.4;
+    transform: translateZ(0) translateX(0);
+    transform-style: preserve-3d;
+    transition: none;
   }
 
   .danmaku:hover {
     transform: translateZ(0) scale(1.05);
     box-shadow: 0 6px 16px rgba(147, 51, 234, 0.16);
-    z-index: 20;
+    z-index: 25;
   }
 
   /* 星期顯示的文字顏色 */

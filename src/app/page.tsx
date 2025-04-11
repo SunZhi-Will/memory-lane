@@ -11,8 +11,46 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // 溫馨小語陣列
+  const heartfeltMessages = [
+    "每一段對話都是生命中的珍寶，文字能重新撫慰我們的心靈。",
+    "時間流逝，但那些珍貴的回憶，永遠留在我們心裡的角落。",
+    "重溫過去的每一句問候，都讓我們與當時的自己再次相遇。",
+    "文字背後是情感的流動，是無法取代的珍貴記憶。",
+    "回顧過去的對話，是與逝去時光的一場溫柔對話。",
+    "那些日常的問候與關心，織成了我們生命中最美的風景。",
+    "在字裡行間，找回那些被時間沖淡的感動與溫度。",
+    "重讀舊日的訊息，才發現原來幸福一直都在身邊。",
+    "有些話語，只有回頭才能體會它背後的深刻含義。",
+    "我們的故事，藏在每一則訊息中，靜待被重新發現。",
+    "那些曾經的對話，是我們與過去保持連結的方式。",
+    "時光易逝，但文字永存，它們承載著我們共同的記憶。"
+  ];
+
+  // 上傳處理過程中的溫馨小語
+  const processingMessages = [
+    "有些回憶，只有重新閱讀，才能感受當初的溫度。",
+    "時光荏苒，感謝科技讓我們能夠重溫那些珍貴瞬間。",
+    "每一次回顧，都是與過去自己的一場溫暖對話。",
+    "文字是時間的信使，帶我們回到那些美好的時刻。",
+    "當我們整理回憶時，也是在整理自己的心靈。",
+    "細數過往的對話，彷彿重新經歷那些悲歡離合。",
+    "在數字時代，我們的情感依然真實而溫暖。",
+    "讓我們一起打開時光的門扉，重訪那些美好。",
+    "這些字句間，藏著我們的笑淚與成長。",
+    "慢慢咀嚼這些文字，找回那些被遺忘的感動。",
+    "記憶或許模糊，但文字永遠清晰地記錄著過往。",
+    "每一條訊息背後，都是一段值得珍藏的故事。"
+  ];
+
+  // 隨機選擇一則溫馨小語和處理小語
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [processingMessage, setProcessingMessage] = useState("");
+  const [messageRefreshAnimation, setMessageRefreshAnimation] = useState(false);
 
   // 漂浮的記憶泡泡效果
   const [bubbles, setBubbles] = useState<{ id: number, x: number, y: number, size: number, delay: number }[]>([]);
@@ -27,12 +65,25 @@ export default function Home() {
       delay: Math.random() * 5
     }));
     setBubbles(newBubbles);
+
+    // 隨機選擇一則溫馨小語
+    const randomIndex = Math.floor(Math.random() * heartfeltMessages.length);
+    setCurrentMessage(heartfeltMessages[randomIndex]);
+
+    // 隨機選擇一則處理過程中的溫馨小語
+    const randomProcessingIndex = Math.floor(Math.random() * processingMessages.length);
+    setProcessingMessage(processingMessages[randomProcessingIndex]);
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
-    setError(null);
-    setFile(selectedFile);
+    if (selectedFile) {
+      setError(null);
+      setFile(selectedFile);
+
+      // 直接開始處理選擇的檔案
+      processFile(selectedFile);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -53,32 +104,44 @@ export default function Home() {
     setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
+      const droppedFile = e.dataTransfer.files[0];
+      setFile(droppedFile);
       setError(null);
+
+      // 自動開始處理檔案
+      processFile(droppedFile);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) {
+  // 提取檔案處理邏輯到單獨的函數，以便可以從多個地方調用
+  const processFile = async (fileToProcess: File) => {
+    if (!fileToProcess) {
       setError('請選擇一個檔案，讓我們一起重溫那些美好時光');
       return;
     }
 
+    // 重新選擇一個隨機處理訊息
+    const randomProcessingIndex = Math.floor(Math.random() * processingMessages.length);
+    setProcessingMessage(processingMessages[randomProcessingIndex]);
+
     setIsUploading(true);
+    setUploadProgress('準備處理檔案...');
 
     try {
       // 這裡我們只是簡單地解析檔案並儲存到 localStorage
-      const text = await file.text();
+      setUploadProgress('正在讀取檔案...');
+      const text = await fileToProcess.text();
       localStorage.setItem('chatData', text);
-      console.log(`已載入檔案: ${file.name}, 大小: ${file.size} 字節`);
+      console.log(`已載入檔案: ${fileToProcess.name}, 大小: ${fileToProcess.size} 字節`);
 
       // 使用 lineParser 解析聊天記錄
+      setUploadProgress('正在解析聊天記錄...');
       console.log('開始解析聊天記錄...');
       const messages = parseLineChat(text);
       console.log(`解析完成，取得 ${messages.length} 則訊息`);
 
       // 提取月份並去重
+      setUploadProgress('正在處理時間資訊...');
       console.log('開始提取唯一月份...');
       const monthSet = new Set<string>();
 
@@ -112,6 +175,9 @@ export default function Home() {
       localStorage.setItem('timestamps', JSON.stringify(timestamps));
       console.log('已將時間戳存入 localStorage');
 
+      // 完成處理
+      setUploadProgress('處理完成，即將開始您的回憶之旅...');
+
       // 延遲導航以顯示上傳動畫
       console.log('準備導航到時間軸頁面...');
       setTimeout(() => {
@@ -121,11 +187,49 @@ export default function Home() {
       console.error('處理檔案時出錯:', err);
       setError('解析檔案時出錯，請確保是有效的 LINE 聊天紀錄格式');
       setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
+  // 隨機選擇一個新的溫馨小語
+  const refreshHeartfeltMessage = () => {
+    setMessageRefreshAnimation(true);
+
+    // 延遲選擇新訊息，以便動畫效果更流暢
+    setTimeout(() => {
+      const randomIndex = Math.floor(Math.random() * heartfeltMessages.length);
+      setCurrentMessage(heartfeltMessages[randomIndex]);
+      setMessageRefreshAnimation(false);
+    }, 300);
+  };
+
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center p-8 overflow-hidden">
+    <main
+      className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* 拖曳疊加層 - 只在拖曳激活時顯示 */}
+      <AnimatePresence>
+        {dragActive && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-purple-600/20 backdrop-blur-sm z-50 flex items-center justify-center"
+          >
+            <div className="bg-white p-6 rounded-xl shadow-2xl text-center">
+              <svg className="w-16 h-16 mx-auto mb-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <h2 className="text-xl font-bold text-purple-800 mb-2">釋放以上傳檔案</h2>
+              <p className="text-sm text-gray-600">將開始您的時光回顧之旅</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 背景泡泡 */}
       {bubbles.map(bubble => (
         <motion.div
@@ -150,14 +254,42 @@ export default function Home() {
       ))}
 
       {/* 主要內容 */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto">
+      <div className="relative z-10 w-full max-w-3xl mx-auto">
+        {/* 上傳中覆蓋層 */}
+        <AnimatePresence>
+          {isUploading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-xl"
+            >
+              <div className="text-center p-8">
+                <div className="relative w-20 h-20 mx-auto mb-6">
+                  <div className="absolute inset-0 rounded-full border-4 border-purple-200 opacity-25"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-purple-600 opacity-75 animate-spin border-t-transparent"></div>
+                </div>
+                <h2 className="text-xl font-bold text-purple-800 mb-2">正在編織您的回憶...</h2>
+                {uploadProgress && (
+                  <p className="text-sm text-purple-600 mb-4">{uploadProgress}</p>
+                )}
+                <div className="max-w-md mx-auto mt-4 bg-purple-50 p-3 rounded-lg">
+                  <p className="text-xs text-purple-700 italic">
+                    "{processingMessage}"
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="text-center mb-10"
+          className="text-center mb-4"
         >
-          <div className="relative w-40 h-40 mx-auto mb-4">
+          <div className="relative w-28 h-28 mx-auto mb-2">
             <Image
               src="/MemoryLaneLOGO.png"
               alt="MemoryLane Logo"
@@ -167,39 +299,32 @@ export default function Home() {
             />
           </div>
 
-          <h2 className="text-3xl font-bold mb-2 text-purple-800">
+          <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
             MemoryLane
-          </h2>
-
-          <h1 className="text-5xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
-            時光回顧
           </h1>
-          <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-xl mx-auto">
             每一則訊息都是回憶，每一段對話都值得珍藏
           </p>
-          <p className="text-gray-500 italic max-w-md mx-auto">
-            「時間沖淡了一切，但對話卻記錄了我們共度的每一刻」
-          </p>
+
+
         </motion.div>
 
-        <div className="flex flex-col md:flex-row gap-8 items-stretch">
+        <div className="flex flex-col md:flex-row gap-4 items-stretch">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.7 }}
             className="w-full md:w-1/2"
           >
-            <div className="h-full p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-100">
-              <h2 className="text-2xl font-bold mb-6 text-purple-800">上傳您的回憶</h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="h-full p-5 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-purple-100">
+              <h2 className="text-xl font-bold mb-4 text-purple-800">上傳您的回憶</h2>
+              <div className="space-y-3">
                 <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ${dragActive
+                  className={`relative flex flex-col items-center justify-center w-full h-65 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ${dragActive
                     ? 'border-purple-500 bg-purple-50'
                     : 'border-purple-200 hover:border-purple-400 bg-purple-50/50 hover:bg-purple-50'
                     }`}
+                  onClick={() => inputRef.current?.click()}
                 >
                   <input
                     ref={inputRef}
@@ -209,82 +334,51 @@ export default function Home() {
                     onChange={handleFileChange}
                   />
 
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex flex-col items-center justify-center pt-5 pb-6"
-                  >
-                    <svg className="w-10 h-10 mb-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex flex-col items-center justify-center pt-2 pb-2">
+                    <svg className="w-6 h-6 mb-1 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    <p className="mb-2 text-sm text-gray-600">
+                    <p className="mb-0.5 text-sm text-gray-600">
                       <span className="font-semibold">點擊上傳</span> 或將檔案拖放至此
                     </p>
                     <p className="text-xs text-gray-500 mb-1">僅限 LINE 聊天紀錄 (TXT 或 LOG 檔案)</p>
-                    <p className="text-xs text-purple-600 font-medium">請確保檔案格式為 LINE 對話紀錄匯出格式</p>
-                  </motion.div>
+                    <p className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="inline-block h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      選擇檔案後將自動開始處理
+                    </p>
+                  </div>
 
-                  <motion.button
+                  <button
                     type="button"
                     onClick={() => inputRef.current?.click()}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="absolute bottom-3 right-3 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg px-4 py-2 shadow-md transition-colors"
+                    className="absolute bottom-2 right-2 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg px-2 py-1 shadow-md transition-colors"
                   >
                     選擇檔案
-                  </motion.button>
+                  </button>
                 </div>
 
                 <AnimatePresence>
-                  {file && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="text-sm text-purple-700 bg-purple-50 p-3 rounded-lg flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {file && !isUploading && (
+                    <p className="text-sm text-purple-700 bg-purple-50 p-2 rounded-lg flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span>已選擇: <span className="font-medium">{file.name}</span></span>
-                    </motion.p>
+                    </p>
                   )}
 
                   {error && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="text-sm text-rose-600 bg-rose-50 p-3 rounded-lg flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <p className="text-sm text-rose-600 bg-rose-50 p-2 rounded-lg flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span>{error}</span>
-                    </motion.p>
+                    </p>
                   )}
                 </AnimatePresence>
-
-                <motion.button
-                  type="submit"
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-base font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300"
-                  disabled={isUploading}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {isUploading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                      </svg>
-                      正在編織您的回憶...
-                    </>
-                  ) : '開始我的時光之旅'}
-                </motion.button>
-              </form>
+              </div>
             </div>
           </motion.div>
 
@@ -292,89 +386,90 @@ export default function Home() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5, duration: 0.7 }}
-            className="w-full md:w-1/2 flex flex-col gap-6"
+            className="w-full md:w-1/2 flex flex-col gap-4"
           >
-            <div className="h-full flex-1 p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-100">
-              <h2 className="text-2xl font-bold mb-6 text-purple-800">特色功能</h2>
-              <ul className="space-y-5">
-                <motion.li
-                  className="flex items-start"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-4">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-5 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-purple-100">
+              <h2 className="text-xl font-bold mb-3 text-purple-800">特色功能</h2>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">隱私至上</h3>
-                    <p className="mt-1 text-gray-600">檔案僅會在您的裝置上處理，不會上傳到任何伺服器，您的私密對話安全無虞。</p>
+                    <h3 className="text-base font-medium text-gray-900">隱私至上</h3>
+                    <p className="text-sm text-gray-600">檔案僅在您的裝置上處理，不會上傳到任何伺服器</p>
                   </div>
-                </motion.li>
+                </li>
 
-                <motion.li
-                  className="flex items-start"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-4">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">情感彈幕</h3>
-                    <p className="mt-1 text-gray-600">以動態彈幕方式重溫對話，彷彿時間倒流，與過去的對話重新連結。</p>
+                    <h3 className="text-base font-medium text-gray-900">情感彈幕</h3>
+                    <p className="text-sm text-gray-600">動態彈幕重溫對話，彷彿時間倒流與過去連結</p>
                   </div>
-                </motion.li>
+                </li>
 
-                <motion.li
-                  className="flex items-start"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-4">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">時光時間線</h3>
-                    <p className="mt-1 text-gray-600">以精美動畫呈現對話的時間脈絡，讓您輕鬆回顧每個重要時刻和情感轉折。</p>
+                    <h3 className="text-base font-medium text-gray-900">時光時間線</h3>
+                    <p className="text-sm text-gray-600">精美動畫呈現對話時間脈絡，回顧重要時刻</p>
                   </div>
-                </motion.li>
+                </li>
               </ul>
             </div>
 
-            <div className="p-6 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl shadow-lg text-white">
-              <div className="flex items-center mb-3">
-                <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <div
+              className="p-4 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl shadow-lg text-white cursor-pointer transition-all duration-300 hover:shadow-xl group relative overflow-hidden"
+              onClick={refreshHeartfeltMessage}
+            >
+              <div className="flex items-center mb-1">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                   <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
                 </svg>
-                <h3 className="text-lg font-semibold">溫馨小語</h3>
+                <h3 className="text-base font-semibold">溫馨小語</h3>
+
+                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-4 h-4 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
               </div>
-              <blockquote className="italic text-sm">
-                "每一段對話都是生命中的珍寶，當文字再次浮現在眼前，那些曾經的喜悅、淚水和承諾，會重新撫慰我們的心靈。"
-              </blockquote>
+              <AnimatePresence mode="wait">
+                <motion.blockquote
+                  key={currentMessage}
+                  initial={messageRefreshAnimation ? { opacity: 0, y: 10 } : false}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="italic text-xs"
+                >
+                  "{currentMessage}"
+                </motion.blockquote>
+              </AnimatePresence>
+              <div className="absolute bottom-1 right-2 text-xs text-white/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                點擊刷新
+              </div>
             </div>
           </motion.div>
         </div>
 
-        <motion.footer
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.7 }}
-          className="mt-16 text-center text-sm text-gray-500"
-        >
-          <p className="mb-2">
-            MemoryLane | 時光回顧 © {new Date().getFullYear()} | 用科技珍藏美好
-          </p>
+        <footer className="mt-5 text-center text-xs text-gray-500">
           <p>
-            您的隱私始終是我們的首要考量，所有資料皆僅儲存於您的裝置中
+            MemoryLane | 時光回顧 © {new Date().getFullYear()} | 隱私資料皆僅儲存於裝置中
           </p>
-        </motion.footer>
+        </footer>
       </div>
     </main>
   );

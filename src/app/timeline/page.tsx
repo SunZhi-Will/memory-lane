@@ -554,7 +554,7 @@ export default function Timeline() {
                         <div className="time-ripple absolute inset-0" style={{ animationDelay: '1s' }}></div>
                         <div className="absolute inset-0 rounded-full bg-purple-100 flex items-center justify-center">
                             <Image
-                                src="/line-chat.svg"
+                                src="/MemoryLaneLOGO.png"
                                 alt="記憶喚醒"
                                 width={64}
                                 height={64}

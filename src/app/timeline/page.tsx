@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { parseLineChat } from '@/utils/lineParser';
-import DanmakuComponent from '@/components/Danmaku';
-import { type Message } from '@/components/Danmaku';
+import DanmakuComponent, { type DanmakuHandles, type Message } from '@/components/Danmaku';
 
 // 定義訊息介面 (使用從彈幕元件匯入的介面)
 // interface Message {
@@ -25,13 +24,17 @@ export default function Timeline() {
     // 從這裡移除 danmakus 狀態
     const [loading, setLoading] = useState(true);
     const [showMemoryEffect, setShowMemoryEffect] = useState(false);
-    const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+    const [playbackSpeed, setPlaybackSpeed] = useState<number>(2.0);
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [scrollPosition, setScrollPosition] = useState<number>(0);
     const [isBubbleMode, setIsBubbleMode] = useState<boolean>(false);
     const timelineRef = useRef<HTMLDivElement>(null);
     // 用於彈幕元件的參考
-    const danmakuRef = useRef<{ resetDanmaku: (isInitial?: boolean) => void }>(null);
+    const danmakuRef = useRef<DanmakuHandles>(null);
+    // 用於跟踪速度和模式變更的初始渲染
+    const isFirstModeSpeedRender = useRef<boolean>(true);
+    // 用於跟踪暫停/播放狀態變更的初始渲染
+    const isFirstPauseRender = useRef<boolean>(true);
 
     // 為每個發送者分配固定顏色
     const colorClasses = [
@@ -192,16 +195,107 @@ export default function Timeline() {
 
     // 移除彈幕定時器相關的useEffect
 
+    // 根據滾動位置更新當前月份
+    useEffect(() => {
+        if (timelineRef.current && timestamps.length > 0) {
+            const monthHeight = window.innerHeight - 120;
+            const currentIndex = Math.round(scrollPosition / monthHeight);
+
+            // 確保索引在有效範圍內
+            const safeIndex = Math.min(Math.max(0, currentIndex), timestamps.length - 1);
+
+            if (timestamps[safeIndex] && timestamps[safeIndex] !== currentMonth) {
+                setCurrentMonth(timestamps[safeIndex]);
+            }
+        }
+    }, [scrollPosition, timestamps, currentMonth]);
+
+    // 監聽速度和模式變化，並在變化時重置彈幕
+    useEffect(() => {
+        if (isFirstModeSpeedRender.current) {
+            isFirstModeSpeedRender.current = false;
+            return;
+        }
+
+        console.log("速度或模式變化，重置彈幕");
+
+        // 如果彈幕元件已準備好，則重置
+        if (danmakuRef.current) {
+            // 使用setTimeout確保在渲染循環外執行
+            const timer = setTimeout(() => {
+                if (danmakuRef.current) {
+                    // 先重置/清空彈幕
+                    danmakuRef.current.resetDanmaku(true);
+
+                    // 延遲500ms後恢復彈幕生成
+                    const resumeTimer = setTimeout(() => {
+                        if (danmakuRef.current && !isPaused) {
+                            console.log("恢復彈幕生成");
+                            danmakuRef.current.resumeDanmaku();
+                        }
+                    }, 500);
+
+                    return () => {
+                        clearTimeout(resumeTimer);
+                    };
+                }
+            }, 0);
+
+            return () => clearTimeout(timer);
+        }
+    }, [playbackSpeed, isBubbleMode, isPaused]);
+
+    // 處理暫停/播放狀態變化
+    useEffect(() => {
+        if (isFirstPauseRender.current) {
+            isFirstPauseRender.current = false;
+            return;
+        }
+
+        console.log("暫停/播放狀態變化:", isPaused ? "暫停" : "播放");
+
+        if (danmakuRef.current) {
+            // 使用setTimeout確保在渲染循環外執行
+            const timer = setTimeout(() => {
+                if (danmakuRef.current) {
+                    if (isPaused) {
+                        danmakuRef.current.pauseDanmaku();
+                    } else {
+                        danmakuRef.current.resumeDanmaku();
+                    }
+                }
+            }, 0);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isPaused]);
+
+    // 設置初始月份
+    useEffect(() => {
+        if (!loading && timestamps.length > 0) {
+            // 縮短延遲時間，更快開始生成彈幕
+            setTimeout(() => {
+                setCurrentMonth(timestamps[0]);
+            }, 100);
+        }
+    }, [loading, timestamps]);
+
     const handlePauseToggle = () => {
-        // 切換暫停/播放狀態
+        // 切換暫停/播放狀態，實際操作在useEffect中處理
         setIsPaused(prevPaused => !prevPaused);
     };
 
     const handleSpeedChange = (speed: number) => {
-        // 如果速度改變了，更新播放速度
+        // 如果速度改變了，只更新狀態，實際重置在useEffect中處理
         if (speed !== playbackSpeed) {
             setPlaybackSpeed(speed);
         }
+    };
+
+    // 切換彈幕模式
+    const toggleDanmakuMode = () => {
+        // 切換模式，實際重置在useEffect中處理
+        setIsBubbleMode(prevMode => !prevMode);
     };
 
     // 監聽滾動
@@ -238,31 +332,6 @@ export default function Timeline() {
         }
     };
 
-    // 根據滾動位置更新當前月份
-    useEffect(() => {
-        if (timelineRef.current && timestamps.length > 0) {
-            const monthHeight = window.innerHeight - 120;
-            const currentIndex = Math.round(scrollPosition / monthHeight);
-
-            // 確保索引在有效範圍內
-            const safeIndex = Math.min(Math.max(0, currentIndex), timestamps.length - 1);
-
-            if (timestamps[safeIndex] && timestamps[safeIndex] !== currentMonth) {
-                setCurrentMonth(timestamps[safeIndex]);
-            }
-        }
-    }, [scrollPosition, timestamps, currentMonth]);
-
-    // 設置初始月份
-    useEffect(() => {
-        if (!loading && timestamps.length > 0) {
-            // 縮短延遲時間，更快開始生成彈幕
-            setTimeout(() => {
-                setCurrentMonth(timestamps[0]);
-            }, 100);
-        }
-    }, [loading, timestamps]);
-
     // 格式化月份顯示
     const formatMonth = (month: string) => {
         try {
@@ -287,12 +356,6 @@ export default function Timeline() {
         } catch {
             return month; // 發生任何錯誤，原樣返回
         }
-    };
-
-    // 切換彈幕模式
-    const toggleDanmakuMode = () => {
-        // 切換模式
-        setIsBubbleMode(!isBubbleMode);
     };
 
     // 記憶加載效果
@@ -345,6 +408,7 @@ export default function Timeline() {
             {/* 使用彈幕元件替換原有的彈幕系統 */}
             {currentMonth && messages[currentMonth] && (
                 <DanmakuComponent
+                    ref={danmakuRef}
                     currentMonth={currentMonth}
                     messages={messages}
                     isPaused={isPaused}

@@ -59,16 +59,27 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
 
     // 清理所有定時器
     const clearAllTimers = () => {
-        if (danmakuTimerRef.current) {
-            clearInterval(danmakuTimerRef.current);
-            danmakuTimerRef.current = null;
-        }
+        try {
+            // 清理主要的定時器
+            if (danmakuTimerRef.current) {
+                clearInterval(danmakuTimerRef.current);
+                danmakuTimerRef.current = null;
+            }
 
-        // 清除所有存儲的timeout
-        timeoutRefs.current.forEach(timeout => {
-            clearTimeout(timeout);
-        });
-        timeoutRefs.current = [];
+            // 清除所有存儲的timeout
+            timeoutRefs.current.forEach(timeout => {
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+            });
+
+            // 重置timeout數組
+            timeoutRefs.current = [];
+
+            console.log("所有定時器已清理");
+        } catch (error) {
+            console.error("清理定時器時出錯:", error);
+        }
     };
 
     // 重置彈幕系統的函數，可以從外部調用
@@ -102,16 +113,33 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
     // 恢復彈幕
     const resumeDanmaku = () => {
         if (!danmakuTimerRef.current && currentMonth && messages[currentMonth]) {
-            const baseInterval = isBubbleMode ? 6000 : 6000;
-            const randomVariation = isBubbleMode ? 3000 : 3000;
+            // 立即生成第一批彈幕，確保切換後能立即顯示
+            generateDanmakus(messages[currentMonth], true);
+
+            // 調整間隔時間，縮短生成間隔
+            const baseInterval = isBubbleMode ? 4000 : 3500;  // 減少基本間隔
+            const randomVariation = isBubbleMode ? 2000 : 1500;
+
+            // 使用更高的速度因子
+            const speedFactor = playbackSpeed === 1 ? 1.8 : playbackSpeed;
+
             const adjustedInterval = Math.max(
-                isBubbleMode ? 3000 : 4000,
-                (baseInterval + Math.random() * randomVariation) / playbackSpeed
+                isBubbleMode ? 2000 : 1800,  // 大幅減少最小間隔
+                (baseInterval + Math.random() * randomVariation) / speedFactor
             );
 
-            danmakuTimerRef.current = setInterval(() => {
-                generateDanmakus(messages[currentMonth]);
-            }, adjustedInterval);
+            // 設定較短的初始延遲後再次生成彈幕
+            const initialTimer = setTimeout(() => {
+                generateDanmakus(messages[currentMonth], false);
+
+                // 然後設置定時器持續生成
+                danmakuTimerRef.current = setInterval(() => {
+                    generateDanmakus(messages[currentMonth]);
+                }, adjustedInterval);
+            }, 400);  // 從500ms減為400ms
+
+            // 保存timer引用以便清理
+            timeoutRefs.current.push(initialTimer);
         }
     };
 
@@ -127,18 +155,18 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
         if (!monthMessages || monthMessages.length === 0) return;
 
         // 固定彈幕的基本數量範圍
-        let maxDanmakus = 4;
+        let maxDanmakus = 6;  // 增加一般模式下的彈幕數量
 
         // 根據模式和是否為初始化調整生成數量
         if (isInitialBubble && isBubbleMode) {
-            maxDanmakus = 12;
+            maxDanmakus = 14;  // 增加初始泡泡模式的彈幕數量
         } else if (isInitialBubble && !isBubbleMode) {
-            maxDanmakus = 7;
+            maxDanmakus = 12;  // 大幅增加初始水平彈幕的數量
         } else if (isBubbleMode) {
-            maxDanmakus = 6;
+            maxDanmakus = 8;  // 增加泡泡模式下一般彈幕的數量
         }
 
-        const danmakuCount = Math.floor(Math.random() * maxDanmakus) + 2;
+        const danmakuCount = Math.floor(Math.random() * maxDanmakus) + 3;  // 最少生成3個彈幕
 
         // 從訊息中隨機選擇彈幕
         const shuffled = [...monthMessages].sort(() => 0.5 - Math.random());
@@ -256,12 +284,15 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
 
             // 設定基本持續時間 - 不受速度影響的初始值
             // 標準持續時間（以秒為單位）- 後續會根據播放速度調整
+            // 泡泡模式和水平彈幕模式使用不同的基本時間
             const baseDuration = isBubbleMode ?
-                (isInitialBubble ? (Math.random() * 30 + 80) : (Math.random() * 30 + 60)) :
-                (Math.random() * 30 + 70);
+                (isInitialBubble ? (Math.random() * 25 + 60) : (Math.random() * 25 + 45)) :  // 減少泡泡模式的持續時間
+                (Math.random() * 15 + 50);  // 減少水平彈幕模式的持續時間，讓1x速度下也能較快
 
             // 根據當前播放速度調整實際持續時間
-            const adjustedDuration = baseDuration / playbackSpeed;
+            // 調整速度因子：讓1x速度變快一些，但保持2x和3x的相對變化
+            const speedFactor = playbackSpeed === 1 ? 1.5 : playbackSpeed;  // 1x速度實際按1.5倍計算
+            const adjustedDuration = baseDuration / speedFactor;
 
             // 泡泡模式和水平彈幕模式的延遲時間也不同
             const animDelay = isBubbleMode ?
@@ -318,7 +349,7 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
             }))
         );
 
-        // 在延遲後重新初始化彈幕
+        // 在極短的延遲後重新初始化彈幕
         const resetTimer = setTimeout(() => {
             // 清除舊彈幕
             setDanmakus(prevDanmakus =>
@@ -327,20 +358,29 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
 
             // 只有在非暫停狀態下才生成新彈幕
             if (currentMonth && messages[currentMonth] && !isPaused) {
-                const baseInterval = isBubbleMode ? 6000 : 6000;
-                const randomVariation = isBubbleMode ? 3000 : 3000;
+                // 調整基本間隔時間，大幅縮短生成彈幕的時間間隔
+                const baseInterval = isBubbleMode ? 4000 : 3500;  // 減少基本間隔
+                const randomVariation = isBubbleMode ? 2000 : 1500;
+
+                // 調整速度因子：讓1x速度變快更多
+                const speedFactor = playbackSpeed === 1 ? 1.8 : playbackSpeed;
+
                 const adjustedInterval = Math.max(
-                    isBubbleMode ? 3000 : 4000,
-                    (baseInterval + Math.random() * randomVariation) / playbackSpeed
+                    isBubbleMode ? 2000 : 1800,  // 大幅減少最小間隔
+                    (baseInterval + Math.random() * randomVariation) / speedFactor
                 );
 
-                // 立即生成第一批彈幕
+                // 立即生成第一批彈幕，數量增加
                 generateDanmakus(messages[currentMonth], true);
 
-                // 設置生成彈幕的定時器
-                const timerDelay = isBubbleMode ? 1500 : 1200;
+                // 設置生成彈幕的定時器 - 極短的初始延遲
+                const timerDelay = isBubbleMode ? 400 : 300;  // 大幅減少等待時間，讓彈幕立即出現
 
                 const timer = setTimeout(() => {
+                    // 立即生成第二批彈幕
+                    generateDanmakus(messages[currentMonth], false);
+
+                    // 然後設置定時器
                     danmakuTimerRef.current = setInterval(() => {
                         generateDanmakus(messages[currentMonth]);
                     }, adjustedInterval);
@@ -349,9 +389,9 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
                 // 保存timeout引用以便後續清理
                 timeoutRefs.current.push(timer);
             }
-        }, 600);
+        }, 200);  // 大幅縮短整體重置延遲，從400ms減為200ms
 
-        // 保存timeout引用以便後續清理
+        // 立即保存resetTimer到timeoutRefs
         timeoutRefs.current.push(resetTimer);
 
         return () => {
@@ -386,7 +426,23 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
                                 scale: (danmaku.originalPlaybackSpeed || playbackSpeed) === 1 ? 0.5 :
                                     (danmaku.originalPlaybackSpeed || playbackSpeed) === 2 ? 0.4 :
                                         0.3,
-                                transition: { duration: 0.8 / (danmaku.originalPlaybackSpeed || playbackSpeed), ease: "easeOut" }
+                                y: `calc(${danmaku.position}% + 15px)`,  // 在淡出時輕微下移
+                                transition: {
+                                    duration: 2.0 / (danmaku.originalPlaybackSpeed || playbackSpeed),
+                                    ease: [0.4, 0.0, 0.2, 1],  // 使用自定義緩動函數
+                                    opacity: {
+                                        duration: 2.5 / (danmaku.originalPlaybackSpeed || playbackSpeed),
+                                        ease: "easeOut"
+                                    },
+                                    scale: {
+                                        duration: 2.0 / (danmaku.originalPlaybackSpeed || playbackSpeed),
+                                        ease: "easeIn"
+                                    },
+                                    y: {
+                                        duration: 2.2 / (danmaku.originalPlaybackSpeed || playbackSpeed),
+                                        ease: "easeInOut"
+                                    }
+                                }
                             } :
                             {
                                 opacity: 0,
@@ -412,7 +468,8 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
                             ease: "linear"
                         } :
                         (!danmaku.isFading ? {
-                            duration: danmaku.duration / playbackSpeed,
+                            // 計算有效速度因子，讓1x速度運行時實際是1.5倍速度
+                            duration: danmaku.duration / (playbackSpeed === 1 ? 1.5 : playbackSpeed),
                             delay: isBubbleMode ? (danmaku.animationDelay / playbackSpeed) : 0,
                             ease: "linear",
                             opacity: {
@@ -420,11 +477,11 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
                                 ease: "easeInOut"
                             },
                             x: isBubbleMode ? undefined : {
-                                duration: danmaku.duration / playbackSpeed,
+                                duration: danmaku.duration / (playbackSpeed === 1 ? 1.5 : playbackSpeed),
                                 ease: "linear"
                             },
                             scale: isBubbleMode ? {
-                                duration: playbackSpeed === 1 ? 5 :
+                                duration: playbackSpeed === 1 ? 4 :
                                     playbackSpeed === 2 ? 3 :
                                         2,
                                 repeat: Infinity,
@@ -438,7 +495,11 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
                                         1.09,
                             } : undefined
                         } : (isBubbleMode ?
-                            { duration: 0.8 / (danmaku.originalPlaybackSpeed || playbackSpeed), ease: "easeOut" } :
+                            {
+                                duration: 1.5 / (danmaku.originalPlaybackSpeed || playbackSpeed),  // 增加泡泡淡出時間
+                                ease: "easeOut",
+                                opacity: { duration: 2.0 / (danmaku.originalPlaybackSpeed || playbackSpeed) }  // 特別延長透明度過渡
+                            } :
                             { duration: 0.5 / (danmaku.originalPlaybackSpeed || playbackSpeed), ease: "easeOut" }
                         ))
                     }
@@ -455,7 +516,9 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
                         const existTime = now - creationTime;
 
                         // 用於計算的播放速度 - 使用彈幕的原始速度或當前速度
-                        const effectiveSpeed = danmaku.originalPlaybackSpeed || playbackSpeed;
+                        const originalSpeed = danmaku.originalPlaybackSpeed || playbackSpeed;
+                        // 使用速度因子調整：如果是1x速度，實際按1.5倍計算
+                        const effectiveSpeed = originalSpeed === 1 ? 1.5 : originalSpeed;
 
                         // 最短存在時間需達到動畫時間的75%
                         const minExistTime = danmaku.duration * 750;
@@ -471,6 +534,7 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
                             const bubbleLifetime = Math.max(8000, danmaku.duration * 1000);
 
                             const timer = setTimeout(() => {
+                                // 標記為淡出狀態，啟動淡出動畫
                                 setDanmakus(current =>
                                     current.map(d =>
                                         d.id === danmaku.id

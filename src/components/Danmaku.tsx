@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
 // 定義彈幕介面
@@ -151,7 +151,7 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
     }));
 
     // 生成彈幕的函數
-    const generateDanmakus = (monthMessages: Message[], isInitialBubble: boolean = false) => {
+    const generateDanmakus = useCallback((monthMessages: Message[], isInitialBubble: boolean = false) => {
         if (!monthMessages || monthMessages.length === 0) return;
 
         // 固定彈幕的基本數量範圍
@@ -171,9 +171,6 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
         // 從訊息中隨機選擇彈幕
         const shuffled = [...monthMessages].sort(() => 0.5 - Math.random());
         const selectedMessages = shuffled.slice(0, Math.min(danmakuCount, shuffled.length));
-
-        // 獲取當前彈幕的數量，作為索引基數
-        const currentCount = danmakus.length;
 
         // 使用更可靠的時間戳方式
         const now = new Date().getTime();
@@ -195,128 +192,127 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
             { min: 76, max: 90 },   // 底部區域
         ];
 
-        // 針對一般模式，檢查現有的彈幕位置，避免新彈幕產生在接近的位置
-        const existingPositions = !isBubbleMode ?
-            danmakus
-                .filter(d => !d.isFading)
-                .map(d => d.position)
-            : [];
-
-        // 為一般模式找出空閒的垂直區域
-        const usedVerticalAreas = new Set();
-        for (const pos of existingPositions) {
-            for (let i = 0; i < verticalAreas.length; i++) {
-                if (pos >= verticalAreas[i].min && pos <= verticalAreas[i].max) {
-                    usedVerticalAreas.add(i);
-                    break;
-                }
-            }
-        }
-
-        // 可用的垂直區域索引
-        const availableVerticalAreas: number[] = [];
-        for (let i = 0; i < verticalAreas.length; i++) {
-            if (!usedVerticalAreas.has(i)) {
-                availableVerticalAreas.push(i);
-            }
-        }
-
-        // 至少保留一個可用區域
-        if (availableVerticalAreas.length === 0) {
-            availableVerticalAreas.push(Math.floor(Math.random() * verticalAreas.length));
-        }
-
-        // 為初始泡泡創建更均勻的分布
-        let initialGrid: { h: number, v: number }[] = [];
-
-        if (isInitialBubble && isBubbleMode) {
-            // 創建一個4x5的網格，確保泡泡均勻覆蓋整個頁面
-            for (let h = 0; h < 4; h++) {
-                for (let v = 0; v < 5; v++) {
-                    initialGrid.push({ h, v });
-                }
-            }
-
-            // 隨機打亂網格順序
-            initialGrid = initialGrid.sort(() => 0.5 - Math.random());
-        }
-
-        // 生成新彈幕
-        const newDanmakus = selectedMessages.map((msg, index) => {
-            // 生成絕對唯一的ID：當前時間 + 當前彈幕數量 + 索引 + 隨機數
-            const uniqueId = `danmaku-${now}-${currentCount + index}-${Math.random().toString(36).substr(2, 9)}`;
-
-            // 為泡泡模式，選擇水平和垂直區域確保均衡分布
-            let bubbleHorizontalPosition = 0;
-            let bubbleVerticalPosition = 0;
-
-            if (isBubbleMode) {
-                if (isInitialBubble && initialGrid.length > 0 && index < initialGrid.length) {
-                    // 對於初始泡泡，從準備好的網格中取一個位置
-                    const gridCell = initialGrid[index];
-
-                    // 從網格單元格計算確切位置，增加一點隨機性但確保在各自區域
-                    const hArea = horizontalAreas[gridCell.h];
-                    const vArea = verticalAreas[gridCell.v % verticalAreas.length];
-
-                    // 在指定區域內增加一點隨機性
-                    bubbleHorizontalPosition = hArea.min + Math.random() * (hArea.max - hArea.min);
-                    bubbleVerticalPosition = vArea.min + Math.random() * (vArea.max - vArea.min);
-                } else {
-                    // 非初始泡泡或超出網格數量的泡泡，隨機選擇區域
-                    const horizontalArea = horizontalAreas[Math.floor(Math.random() * horizontalAreas.length)];
-                    bubbleHorizontalPosition = horizontalArea.min + Math.random() * (horizontalArea.max - horizontalArea.min);
-
-                    const verticalArea = verticalAreas[Math.floor(Math.random() * verticalAreas.length)];
-                    bubbleVerticalPosition = verticalArea.min + Math.random() * (verticalArea.max - verticalArea.min);
-                }
-            } else {
-                // 一般模式：選擇一個空閒的垂直區域
-                const areaIndex = availableVerticalAreas[Math.floor(Math.random() * availableVerticalAreas.length)];
-                const area = verticalAreas[areaIndex];
-
-                // 在選擇的區域中產生隨機位置
-                bubbleVerticalPosition = area.min + Math.random() * (area.max - area.min);
-
-                // 一般模式固定水平位置為0
-                bubbleHorizontalPosition = 0;
-            }
-
-            // 設定基本持續時間 - 不受速度影響的初始值
-            // 標準持續時間（以秒為單位）- 後續會根據播放速度調整
-            // 泡泡模式和水平彈幕模式使用不同的基本時間
-            const baseDuration = isBubbleMode ?
-                (isInitialBubble ? (Math.random() * 25 + 60) : (Math.random() * 25 + 45)) :  // 減少泡泡模式的持續時間
-                (Math.random() * 15 + 50);  // 減少水平彈幕模式的持續時間，讓1x速度下也能較快
-
-            // 根據當前播放速度調整實際持續時間
-            // 調整速度因子：讓1x速度變快一些，但保持2x和3x的相對變化
-            const speedFactor = playbackSpeed === 1 ? 1.5 : playbackSpeed;  // 1x速度實際按1.5倍計算
-            const adjustedDuration = baseDuration / speedFactor;
-
-            // 泡泡模式和水平彈幕模式的延遲時間也不同
-            const animDelay = isBubbleMode ?
-                Math.random() * 0.5 / playbackSpeed :
-                0;
-
-            return {
-                id: uniqueId,
-                content: isBubbleMode ?
-                    (msg.content.length > 50 ? msg.content.substring(0, 50) + '...' : msg.content) :
-                    msg.content,
-                sender: msg.sender,
-                duration: adjustedDuration,
-                position: bubbleVerticalPosition,
-                animationDelay: animDelay,
-                colorIndex: senderColors[msg.sender] || 0,
-                horizontalPosition: bubbleHorizontalPosition,
-                createdAt: Date.now(),
-                originalPlaybackSpeed: playbackSpeed
-            };
-        });
-
-        // 直接添加新彈幕到現有彈幕，不再限制數量
         setDanmakus(prevDanmakus => {
+            // 針對一般模式，檢查現有的彈幕位置，避免新彈幕產生在接近的位置
+            const existingPositions = !isBubbleMode ?
+                prevDanmakus
+                    .filter(d => !d.isFading)
+                    .map(d => d.position)
+                : [];
+
+            // 為一般模式找出空閒的垂直區域
+            const usedVerticalAreas = new Set();
+            for (const pos of existingPositions) {
+                for (let i = 0; i < verticalAreas.length; i++) {
+                    if (pos >= verticalAreas[i].min && pos <= verticalAreas[i].max) {
+                        usedVerticalAreas.add(i);
+                        break;
+                    }
+                }
+            }
+
+            // 可用的垂直區域索引
+            const availableVerticalAreas: number[] = [];
+            for (let i = 0; i < verticalAreas.length; i++) {
+                if (!usedVerticalAreas.has(i)) {
+                    availableVerticalAreas.push(i);
+                }
+            }
+
+            // 至少保留一個可用區域
+            if (availableVerticalAreas.length === 0) {
+                availableVerticalAreas.push(Math.floor(Math.random() * verticalAreas.length));
+            }
+
+            // 為初始泡泡創建更均勻的分布
+            let initialGrid: { h: number, v: number }[] = [];
+
+            if (isInitialBubble && isBubbleMode) {
+                // 創建一個4x5的網格，確保泡泡均勻覆蓋整個頁面
+                for (let h = 0; h < 4; h++) {
+                    for (let v = 0; v < 5; v++) {
+                        initialGrid.push({ h, v });
+                    }
+                }
+
+                // 隨機打亂網格順序
+                initialGrid = initialGrid.sort(() => 0.5 - Math.random());
+            }
+
+            // 生成新彈幕
+            const newDanmakus = selectedMessages.map((msg, index) => {
+                // 生成絕對唯一的ID：當前時間 + 當前彈幕數量 + 索引 + 隨機數
+                const uniqueId = `danmaku-${now}-${prevDanmakus.length + index}-${Math.random().toString(36).substr(2, 9)}`;
+
+                // 為泡泡模式，選擇水平和垂直區域確保均衡分布
+                let bubbleHorizontalPosition = 0;
+                let bubbleVerticalPosition = 0;
+
+                if (isBubbleMode) {
+                    if (isInitialBubble && initialGrid.length > 0 && index < initialGrid.length) {
+                        // 對於初始泡泡，從準備好的網格中取一個位置
+                        const gridCell = initialGrid[index];
+
+                        // 從網格單元格計算確切位置，增加一點隨機性但確保在各自區域
+                        const hArea = horizontalAreas[gridCell.h];
+                        const vArea = verticalAreas[gridCell.v % verticalAreas.length];
+
+                        // 在指定區域內增加一點隨機性
+                        bubbleHorizontalPosition = hArea.min + Math.random() * (hArea.max - hArea.min);
+                        bubbleVerticalPosition = vArea.min + Math.random() * (vArea.max - vArea.min);
+                    } else {
+                        // 非初始泡泡或超出網格數量的泡泡，隨機選擇區域
+                        const horizontalArea = horizontalAreas[Math.floor(Math.random() * horizontalAreas.length)];
+                        bubbleHorizontalPosition = horizontalArea.min + Math.random() * (horizontalArea.max - horizontalArea.min);
+
+                        const verticalArea = verticalAreas[Math.floor(Math.random() * verticalAreas.length)];
+                        bubbleVerticalPosition = verticalArea.min + Math.random() * (verticalArea.max - verticalArea.min);
+                    }
+                } else {
+                    // 一般模式：選擇一個空閒的垂直區域
+                    const areaIndex = availableVerticalAreas[Math.floor(Math.random() * availableVerticalAreas.length)];
+                    const area = verticalAreas[areaIndex];
+
+                    // 在選擇的區域中產生隨機位置
+                    bubbleVerticalPosition = area.min + Math.random() * (area.max - area.min);
+
+                    // 一般模式固定水平位置為0
+                    bubbleHorizontalPosition = 0;
+                }
+
+                // 設定基本持續時間 - 不受速度影響的初始值
+                // 標準持續時間（以秒為單位）- 後續會根據播放速度調整
+                // 泡泡模式和水平彈幕模式使用不同的基本時間
+                const baseDuration = isBubbleMode ?
+                    (isInitialBubble ? (Math.random() * 25 + 60) : (Math.random() * 25 + 45)) :  // 減少泡泡模式的持續時間
+                    (Math.random() * 15 + 50);  // 減少水平彈幕模式的持續時間，讓1x速度下也能較快
+
+                // 根據當前播放速度調整實際持續時間
+                // 調整速度因子：讓1x速度變快一些，但保持2x和3x的相對變化
+                const speedFactor = playbackSpeed === 1 ? 1.5 : playbackSpeed;  // 1x速度實際按1.5倍計算
+                const adjustedDuration = baseDuration / speedFactor;
+
+                // 泡泡模式和水平彈幕模式的延遲時間也不同
+                const animDelay = isBubbleMode ?
+                    Math.random() * 0.5 / playbackSpeed :
+                    0;
+
+                return {
+                    id: uniqueId,
+                    content: isBubbleMode ?
+                        (msg.content.length > 50 ? msg.content.substring(0, 50) + '...' : msg.content) :
+                        msg.content,
+                    sender: msg.sender,
+                    duration: adjustedDuration,
+                    position: bubbleVerticalPosition,
+                    animationDelay: animDelay,
+                    colorIndex: senderColors[msg.sender] || 0,
+                    horizontalPosition: bubbleHorizontalPosition,
+                    createdAt: Date.now(),
+                    originalPlaybackSpeed: playbackSpeed
+                };
+            });
+
             // 如果是泡泡模式，需要控制數量
             if (isBubbleMode) {
                 const maxBubbles = isInitialBubble ? 40 : 30;
@@ -326,7 +322,7 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
             const maxNormalDanmakus = 30;
             return [...prevDanmakus, ...newDanmakus].slice(-maxNormalDanmakus);
         });
-    };
+    }, [isBubbleMode, playbackSpeed, senderColors]);
 
     // 在組件卸載時清理所有定時器
     useEffect(() => {
@@ -397,7 +393,7 @@ const DanmakuComponent = forwardRef<DanmakuHandles, DanmakuProps>(({
         return () => {
             clearAllTimers();
         };
-    }, [currentMonth, messages, isPaused, isBubbleMode, playbackSpeed]);
+    }, [currentMonth, messages, isPaused, isBubbleMode, playbackSpeed, generateDanmakus]);
 
     return (
         <div className="fixed inset-0 pointer-events-none z-10 overflow-hidden">

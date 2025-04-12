@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 
 interface Message {
     date: string;
@@ -52,78 +52,8 @@ export default function Timeline({ messages, onReturn }: TimelineProps) {
         );
     }, [messages]);
 
-    // 將訊息按月份分組
-    useEffect(() => {
-        const monthsMap = new Map<string, Message[]>();
-
-        messages.forEach(message => {
-            const date = new Date(message.date.replace(/\//g, '-'));
-            const monthId = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            const monthLabel = `${date.getFullYear()}年${date.getMonth() + 1}月`;
-
-            if (!monthsMap.has(monthId)) {
-                monthsMap.set(monthId, []);
-            }
-            monthsMap.get(monthId)?.push(message);
-        });
-
-        const sortedMonths = Array.from(monthsMap.entries())
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .map(([id, msgs]) => ({
-                id,
-                label: new Date(id).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' }),
-                messages: msgs.sort((a, b) => {
-                    const dateA = new Date(a.date.replace(/\//g, '-') + ' ' + a.time);
-                    const dateB = new Date(b.date.replace(/\//g, '-') + ' ' + b.time);
-                    return dateA.getTime() - dateB.getTime();
-                })
-            }));
-
-        setTimelineMonths(sortedMonths);
-        if (sortedMonths.length > 0) {
-            setActiveMonth(sortedMonths[0].id);
-            startShowingMessages(sortedMonths[0].id);
-        }
-    }, [messages]);
-
-    // 監聽滾動事件
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const monthId = entry.target.getAttribute('data-month');
-                        if (monthId && monthId !== activeMonth) {
-                            setActiveMonth(monthId);
-                            startShowingMessages(monthId);
-                        }
-                    }
-                });
-            },
-            {
-                threshold: 0.6,
-                rootMargin: '-20% 0px -20% 0px'
-            }
-        );
-
-        Object.entries(monthRefs.current).forEach(([_, ref]) => {
-            if (ref) observer.observe(ref);
-        });
-
-        return () => observer.disconnect();
-    }, [timelineMonths, activeMonth]);
-
-    // 清理計時器
-    useEffect(() => {
-        return () => {
-            if (timerRef.current) {
-                clearTimeout(timerRef.current);
-            }
-        };
-    }, []);
-
-    // 持續顯示訊息
-    const startShowingMessages = (monthId: string) => {
+    // 持續顯示訊息 - 使用useCallback避免循環依賴
+    const startShowingMessages = useCallback((monthId: string) => {
         const month = timelineMonths.find(m => m.id === monthId);
         if (!month) return;
 
@@ -174,7 +104,131 @@ export default function Timeline({ messages, onReturn }: TimelineProps) {
 
         // 開始顯示第一條訊息
         timerRef.current = setTimeout(addNextMessage, 1000);
-    };
+    }, [timelineMonths, isPaused, speed]);
+
+    // 將訊息按月份分組
+    useEffect(() => {
+        const monthsMap = new Map<string, Message[]>();
+
+        messages.forEach(message => {
+            const date = new Date(message.date.replace(/\//g, '-'));
+            const monthId = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+            if (!monthsMap.has(monthId)) {
+                monthsMap.set(monthId, []);
+            }
+            monthsMap.get(monthId)?.push(message);
+        });
+
+        const sortedMonths = Array.from(monthsMap.entries())
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([id, msgs]) => ({
+                id,
+                label: new Date(id).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' }),
+                messages: msgs.sort((a, b) => {
+                    const dateA = new Date(a.date.replace(/\//g, '-') + ' ' + a.time);
+                    const dateB = new Date(b.date.replace(/\//g, '-') + ' ' + b.time);
+                    return dateA.getTime() - dateB.getTime();
+                })
+            }));
+
+        setTimelineMonths(sortedMonths);
+        if (sortedMonths.length > 0) {
+            setActiveMonth(sortedMonths[0].id);
+            // 直接使用內聯版本的startShowingMessages邏輯，或者在useEffect中調用，而不是依賴它
+            const monthId = sortedMonths[0].id;
+            const month = sortedMonths.find(m => m.id === monthId);
+            if (month) {
+                let currentIndex = 0;
+                let isClearing = false;
+
+                // 清除之前的訊息
+                setVisibleMessages([]);
+                messageCountRef.current = 0;
+
+                // 清理任何現有計時器
+                if (timerRef.current) {
+                    clearTimeout(timerRef.current);
+                }
+
+                const addNextMessage = () => {
+                    if (isClearing || isPaused) return;
+
+                    if (currentIndex < month.messages.length) {
+                        const message = month.messages[currentIndex];
+                        const newMessage = {
+                            ...message,
+                            id: `${message.date}-${message.time}-${currentIndex}`
+                        };
+
+                        setVisibleMessages(prev => {
+                            const newMessages = [...prev, newMessage];
+                            // 最多顯示 3 條訊息
+                            return newMessages.slice(-3);
+                        });
+
+                        currentIndex++;
+                        // 使用速度係數調整間隔
+                        const interval = 12000 / speed;
+                        // 儲存計時器參考
+                        timerRef.current = setTimeout(addNextMessage, interval);
+                    } else {
+                        isClearing = true;
+                        // 等待最後一組訊息的動畫完成後再重新開始
+                        timerRef.current = setTimeout(() => {
+                            isClearing = false;
+                            currentIndex = 0;
+                            setVisibleMessages([]);
+                            timerRef.current = setTimeout(addNextMessage, 1000); // 短暫延遲後開始新的循環
+                        }, 12000 / speed);
+                    }
+                };
+
+                // 開始顯示第一條訊息
+                timerRef.current = setTimeout(addNextMessage, 1000);
+            }
+        }
+    }, [messages, isPaused, speed]);
+
+    // 監聽滾動事件
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const monthId = entry.target.getAttribute('data-month');
+                        if (monthId && monthId !== activeMonth) {
+                            setActiveMonth(monthId);
+                            // 調用startShowingMessages，但不要在依賴數組中引用它
+                            if (monthId) {
+                                startShowingMessages(monthId);
+                            }
+                        }
+                    }
+                });
+            },
+            {
+                threshold: 0.6,
+                rootMargin: '-20% 0px -20% 0px'
+            }
+        );
+
+        // 修正未使用變量問題
+        Object.entries(monthRefs.current).forEach(([, ref]) => {
+            if (ref) observer.observe(ref);
+        });
+
+        return () => observer.disconnect();
+    }, [timelineMonths, activeMonth, startShowingMessages]); // 添加startShowingMessages作為依賴
+
+    // 清理計時器
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+            }
+        };
+    }, []);
 
     // 暫停/繼續
     const handlePlayPause = () => {

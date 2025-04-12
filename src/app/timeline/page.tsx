@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { parseLineChat } from '@/utils/lineParser';
@@ -187,7 +187,7 @@ export default function Timeline() {
             router.push('/');
             return;
         }
-    }, [router]);
+    }, [router, colorClasses.length]);
 
     // 移除彈幕生成相關的useEffect
 

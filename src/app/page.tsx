@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { parseLineChat } from '@/utils/lineParser';
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -17,7 +18,7 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 溫馨小語陣列
-  const heartfeltMessages = [
+  const heartfeltMessages = useMemo(() => [
     "每一段對話都是生命中的珍寶，文字能重新撫慰我們的心靈。",
     "時間流逝，但那些珍貴的回憶，永遠留在我們心裡的角落。",
     "重溫過去的每一句問候，都讓我們與當時的自己再次相遇。",
@@ -30,10 +31,10 @@ export default function Home() {
     "我們的故事，藏在每一則訊息中，靜待被重新發現。",
     "那些曾經的對話，是我們與過去保持連結的方式。",
     "時光易逝，但文字永存，它們承載著我們共同的記憶。"
-  ];
+  ], []);
 
   // 上傳處理過程中的溫馨小語
-  const processingMessages = [
+  const processingMessages = useMemo(() => [
     "有些回憶，只有重新閱讀，才能感受當初的溫度。",
     "時光荏苒，感謝科技讓我們能夠重溫那些珍貴瞬間。",
     "每一次回顧，都是與過去自己的一場溫暖對話。",
@@ -46,7 +47,7 @@ export default function Home() {
     "慢慢咀嚼這些文字，找回那些被遺忘的感動。",
     "記憶或許模糊，但文字永遠清晰地記錄著過往。",
     "每一條訊息背後，都是一段值得珍藏的故事。"
-  ];
+  ], []);
 
   // 隨機選擇一則溫馨小語和處理小語
   const [currentMessage, setCurrentMessage] = useState("");
@@ -74,7 +75,7 @@ export default function Home() {
     // 隨機選擇一則處理過程中的溫馨小語
     const randomProcessingIndex = Math.floor(Math.random() * processingMessages.length);
     setProcessingMessage(processingMessages[randomProcessingIndex]);
-  }, []);
+  }, [heartfeltMessages, processingMessages]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
@@ -178,7 +179,7 @@ export default function Home() {
       console.log('提取的唯一月份:', monthSet);
 
       // 將 Set 轉換為陣列並排序
-      let timestamps = Array.from(monthSet).sort();
+      const timestamps = Array.from(monthSet).sort();
       console.log('排序後的月份:', timestamps);
 
       // 檢查是否成功提取到任何月份
@@ -359,7 +360,7 @@ export default function Home() {
                 )}
                 <div className="max-w-md mx-auto mt-4 bg-purple-50 p-3 rounded-lg">
                   <p className="text-xs text-purple-700 italic">
-                    "{processingMessage}"
+                    &quot;{processingMessage}&quot;
                   </p>
                 </div>
               </div>
@@ -521,7 +522,7 @@ export default function Home() {
                   transition={{ duration: 0.3 }}
                   className="italic text-xs"
                 >
-                  "{currentMessage}"
+                  &quot;{currentMessage}&quot;
                 </motion.blockquote>
               </AnimatePresence>
 

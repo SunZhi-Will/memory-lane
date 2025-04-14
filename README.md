@@ -1,88 +1,114 @@
 <div align="center">
   <img src="public/MemoryLaneLOGO.png" alt="MemoryLane Logo" width="200" />
-  <h1>MemoryLane - LINE 聊天記錄回顧網站</h1>
-  <p>一個精美的 LINE 聊天記錄回顧網站，讓您以全新的方式重溫珍貴對話與回憶。</p>
+  <h1>MemoryLane - LINE Chat History Review Website</h1>
+  <p>An elegant LINE chat history review website that lets you relive precious conversations and memories in a brand new way.</p>
   
   <p>
-    <a href="#功能特色">功能特色</a> •
-    <a href="#如何使用">如何使用</a> •
-    <a href="#部署資訊">部署資訊</a> •
-    <a href="#技術實現">技術實現</a> •
-    <a href="#隱私聲明">隱私聲明</a> •
-    <a href="#開發設置">開發設置</a>
+    <a href="#features">Features</a> •
+    <a href="#how-to-use">How to Use</a> •
+    <a href="#deployment-information">Deployment Information</a> •
+    <a href="#technical-implementation">Technical Implementation</a> •
+    <a href="#privacy-statement">Privacy Statement</a> •
+    <a href="#development-setup">Development Setup</a>
+  </p>
+  
+  <p>
+    <strong>English</strong> •
+    <a href="README-zh.md">繁體中文</a>
+  </p>
+  
+  <p>
+    <a href="https://github.com/Sunzhi-will/memoryline" target="_blank">
+      <img src="https://img.shields.io/github/stars/Sunzhi-will/memoryline?style=social" alt="GitHub Stars" />
+    </a>
+    <a href="https://github.com/Sunzhi-will/memoryline/fork" target="_blank">
+      <img src="https://img.shields.io/github/forks/Sunzhi-will/memoryline?style=social" alt="GitHub Forks" />
+    </a>
+    <a href="https://github.com/Sunzhi-will/memoryline/issues" target="_blank">
+      <img src="https://img.shields.io/github/issues/Sunzhi-will/memoryline" alt="GitHub Issues" />
+    </a>
   </p>
 </div>
 
 ---
 
-## 🌟 功能特色
+## 📺 Demo
 
-- ✨ **上傳 LINE 聊天記錄**：簡單地上傳您從 LINE 匯出的聊天記錄檔案
-- 📅 **時間線顯示**：按月份組織的精美時間線，直觀地查看對話歷史
-- 💬 **彈幕效果**：當您瀏覽特定月份時，該月份的隨機對話會以彈幕形式呈現，增加回顧樂趣
-- 🔒 **本地處理**：所有處理都在本地進行，確保您的隱私安全
-- 📱 **響應式設計**：在任何裝置上都能獲得最佳體驗
+<div align="center">
+  <a href="https://youtu.be/CPTTjLaydVU" target="_blank">
+    <img src="https://img.youtube.com/vi/CPTTjLaydVU/maxresdefault.jpg" alt="MemoryLane Demo" width="600" />
+  </a>
+  <p>Click the image above to watch the demo on YouTube</p>
+</div>
+
+## 🌟 Features
+
+- ✨ **Upload LINE Chat History**: Easily upload chat history files exported from LINE
+- 📅 **Timeline Display**: Beautifully organized timeline by month, intuitive way to view conversation history
+- 💬 **Danmaku Effect**: When browsing a specific month, random conversations from that month appear as danmaku, adding fun to your review
+- 🔒 **Local Processing**: All processing is done locally, ensuring your privacy is protected
+- 📱 **Responsive Design**: Get the best experience on any device
 
 
 
 
 
-## 🚀 如何使用
+## 🚀 How to Use
 
-### 1️⃣ **獲取 LINE 聊天記錄**：
-   - 開啟 LINE 應用程式
-   - 進入您想要回顧的聊天室
-   - 點擊右上角選單
-   - 選擇「設定」
-   - 選擇「匯出聊天記錄」
-   - 將匯出的檔案保存到您的裝置上
+### 1️⃣ **Get LINE Chat History**:
+   - Open the LINE application
+   - Enter the chat room you want to review
+   - Click on the menu in the top right corner
+   - Select "Settings"
+   - Choose "Export Chat History"
+   - Save the exported file to your device
 
-### 2️⃣ **上傳聊天記錄**：
-   - 訪問 MemoryLane 網站
-   - 點擊上傳區域或拖放您的聊天記錄檔案
-   - 等待系統處理檔案
+### 2️⃣ **Upload Chat History**:
+   - Visit the MemoryLane website
+   - Click the upload area or drag and drop your chat history file
+   - Wait for the system to process the file
 
-### 3️⃣ **瀏覽時間線**：
-   - 處理完成後，自動跳轉到時間線頁面
-   - 使用頂部的月份導航切換不同時間段
-   - 觀賞每個月份的彈幕效果，重溫珍貴對話
+### 3️⃣ **Browse Timeline**:
+   - After processing is complete, automatically redirect to the timeline page
+   - Use the month navigation at the top to switch between different time periods
+   - Watch the danmaku effect for each month, reliving precious conversations
 
-## 🚀 部署資訊
+## 🚀 Deployment Information
 
-您可以使用 Vercel 一鍵部署本專案：
+You can deploy this project with Vercel in one click:
 
 ```bash
-# 使用 Vercel CLI 部署
+# Deploy using Vercel CLI
 vercel
 
-# 或者直接連接您的 GitHub 倉庫到 Vercel
+# Or connect your GitHub repository directly to Vercel
 ```
 
-或者使用 Docker 部署：
+Or deploy using Docker:
 
 ```bash
-# 構建 Docker 映像
+# Build Docker image
 docker build -t memoryline .
 
-# 運行容器
+# Run container
 docker run -p 3000:3000 memoryline
 ```
 
-### 資料處理流程
+### Data Processing Flow
 
-1. **上傳與解析**：使用者上傳的 LINE 聊天記錄檔案經過前端解析
-2. **資料轉換**：將原始資料轉換為結構化格式，按時間與對話者組織
-3. **本地儲存**：使用 localStorage 暫存處理後的資料
-4. **展示渲染**：根據用戶選擇的時間段展示對應的訊息與互動效果
+1. **Upload & Parsing**: LINE chat history files uploaded by users are parsed on the frontend
+2. **Data Conversion**: Raw data is converted into structured format, organized by time and participants
+3. **Local Storage**: Processed data is temporarily stored using localStorage
+4. **Display Rendering**: Messages and interactive effects are displayed based on the time period selected by the user
 
-## 💻 技術實現
+## 💻 Technical Implementation
 
 <div align="center">
   <table>
     <tr>
-      <td align="center"><strong>前端框架</strong></td>
-      <td align="center"><strong>工具與庫</strong></td>
-      <td align="center"><strong>開發工具</strong></td>
+      <td align="center"><strong>Frontend Framework</strong></td>
+      <td align="center"><strong>Tools & Libraries</strong></td>
+      <td align="center"><strong>Development Tools</strong></td>
     </tr>
     <tr>
       <td>
@@ -92,12 +118,12 @@ docker run -p 3000:3000 memoryline
         • Tailwind CSS 4
       </td>
       <td>
-        • Framer Motion (動畫效果)<br>
-        • date-fns 4 (日期處理)<br>
+        • Framer Motion (animations)<br>
+        • date-fns 4 (date handling)<br>
         • react-intersection-observer
       </td>
       <td>
-        • Turbopack (開發模式)<br>
+        • Turbopack (dev mode)<br>
         • ESLint<br>
         • Prettier
       </td>
@@ -105,39 +131,39 @@ docker run -p 3000:3000 memoryline
   </table>
 </div>
 
-## 🔒 隱私聲明
+## 🔒 Privacy Statement
 
-MemoryLane 高度重視您的隱私：
-- 🔒 所有處理都在您的瀏覽器本地進行
-- 🚫 聊天記錄不會上傳到任何伺服器
-- 💾 資料使用 localStorage 暫存，僅在您的瀏覽器中保存
+MemoryLane highly values your privacy:
+- 🔒 All processing is done locally in your browser
+- 🚫 Chat history is not uploaded to any server
+- 💾 Data is temporarily stored using localStorage, only saved within your browser
 
-## ⚙️ 開發設置
+## ⚙️ Development Setup
 
 ```bash
-# 安裝依賴
+# Install dependencies
 npm install
 
-# 啟動開發服務器 (使用 Turbopack)
+# Start development server (using Turbopack)
 npm run dev
 
-# 構建生產版本
+# Build production version
 npm run build
 
-# 啟動生產服務器
+# Start production server
 npm start
 ```
 
-## 🤝 貢獻
+## 🤝 Contribution
 
-歡迎提出問題或提交拉取請求，一起讓這個項目變得更好！
+Issues and pull requests are welcome to make this project better together!
 
-## 📄 授權
+## 📄 License
 
-本專案採用 MIT 授權條款。
+This project is licensed under the MIT License.
 
 ---
 
 <div align="center">
-  <p>用 ❤️ 打造 | © 2025 MemoryLane</p>
+  <p>Made with ❤️ | © 2025 MemoryLane</p>
 </div>

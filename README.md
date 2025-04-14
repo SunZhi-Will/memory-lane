@@ -4,28 +4,19 @@
   <p>An elegant LINE chat history review website that lets you relive precious conversations and memories in a brand new way.</p>
   
   <p>
-    <a href="#features">Features</a> •
-    <a href="#how-to-use">How to Use</a> •
-    <a href="#deployment-information">Deployment Information</a> •
-    <a href="#technical-implementation">Technical Implementation</a> •
-    <a href="#privacy-statement">Privacy Statement</a> •
-    <a href="#development-setup">Development Setup</a>
-  </p>
-  
-  <p>
     <strong>English</strong> •
     <a href="README-zh.md">繁體中文</a>
   </p>
   
   <p>
-    <a href="https://github.com/Sunzhi-will/memoryline" target="_blank">
-      <img src="https://img.shields.io/github/stars/Sunzhi-will/memoryline?style=social" alt="GitHub Stars" />
+    <a href="https://github.com/Sunzhi-will/memory-lane" target="_blank">
+      <img src="https://img.shields.io/github/stars/Sunzhi-will/memory-lane?style=social" alt="GitHub Stars" />
     </a>
-    <a href="https://github.com/Sunzhi-will/memoryline/fork" target="_blank">
-      <img src="https://img.shields.io/github/forks/Sunzhi-will/memoryline?style=social" alt="GitHub Forks" />
+    <a href="https://github.com/Sunzhi-will/memory-lane/fork" target="_blank">
+      <img src="https://img.shields.io/github/forks/Sunzhi-will/memory-lane?style=social" alt="GitHub Forks" />
     </a>
-    <a href="https://github.com/Sunzhi-will/memoryline/issues" target="_blank">
-      <img src="https://img.shields.io/github/issues/Sunzhi-will/memoryline" alt="GitHub Issues" />
+    <a href="https://github.com/Sunzhi-will/memory-lane/issues" target="_blank">
+      <img src="https://img.shields.io/github/issues/Sunzhi-will/memory-lane" alt="GitHub Issues" />
     </a>
   </p>
 </div>

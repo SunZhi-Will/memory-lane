@@ -4,29 +4,19 @@
   <p>一個精美的 LINE 聊天記錄回顧網站，讓您以全新的方式重溫珍貴對話與回憶。</p>
   
   <p>
-    <a href="#功能特色">功能特色</a> •
-    <a href="#演示">演示</a> •
-    <a href="#如何使用">如何使用</a> •
-    <a href="#部署資訊">部署資訊</a> •
-    <a href="#技術實現">技術實現</a> •
-    <a href="#隱私聲明">隱私聲明</a> •
-    <a href="#開發設置">開發設置</a>
-  </p>
-  
-  <p>
     <a href="README.md">English</a> •
     <strong>繁體中文</strong>
   </p>
   
   <p>
-    <a href="https://github.com/Sunzhi-will/memoryline" target="_blank">
-      <img src="https://img.shields.io/github/stars/Sunzhi-will/memoryline?style=social" alt="GitHub 星標" />
+    <a href="https://github.com/Sunzhi-will/memory-lane" target="_blank">
+      <img src="https://img.shields.io/github/stars/Sunzhi-will/memory-lane?style=social" alt="GitHub 星標" />
     </a>
-    <a href="https://github.com/Sunzhi-will/memoryline/fork" target="_blank">
-      <img src="https://img.shields.io/github/forks/Sunzhi-will/memoryline?style=social" alt="GitHub 分支" />
+    <a href="https://github.com/Sunzhi-will/memory-lane/fork" target="_blank">
+      <img src="https://img.shields.io/github/forks/Sunzhi-will/memory-lane?style=social" alt="GitHub 分支" />
     </a>
-    <a href="https://github.com/Sunzhi-will/memoryline/issues" target="_blank">
-      <img src="https://img.shields.io/github/issues/Sunzhi-will/memoryline" alt="GitHub 議題" />
+    <a href="https://github.com/Sunzhi-will/memory-lane/issues" target="_blank">
+      <img src="https://img.shields.io/github/issues/Sunzhi-will/memory-lane" alt="GitHub 議題" />
     </a>
   </p>
 </div>

@@ -68,13 +68,6 @@ docker build -t memoryline .
 docker run -p 3000:3000 memoryline
 ```
 
-## 🔄 架構與工作流程
-
-<div align="center">
-  <img src="public/images/architecture.png" alt="MemoryLane 架構圖" width="700" />
-  <p><em>MemoryLane 系統架構圖</em></p>
-</div>
-
 ### 資料處理流程
 
 1. **上傳與解析**：使用者上傳的 LINE 聊天記錄檔案經過前端解析
